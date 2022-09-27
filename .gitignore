@@ -1,3 +1,7 @@
+bibliotecas/
+cines/
+museos/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
