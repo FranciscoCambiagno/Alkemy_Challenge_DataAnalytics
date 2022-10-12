@@ -6,6 +6,10 @@ import os
 from datetime import date
 
 def ObtenerCSV(urls):
+    """
+    Crea los archivos csv extrayendolos de google sheet.
+    """
+
     urls = list(map(PrepararURL, urls))
     
     for i, url in enumerate(urls):
@@ -56,6 +60,7 @@ def run():
     """
     Es el cuerpo del programa
     """
+    
     urls = [config('URL_MUSEOS'),
             config('URL_CINES'),
             config('URL_BIBLIOTECAS')]
