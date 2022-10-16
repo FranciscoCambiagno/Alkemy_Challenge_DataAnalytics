@@ -8,13 +8,13 @@ from datetime import date
 import pandas as pd
 import numpy as np
 
-def ObtenerCSV(urls):
+def obtener_csv(urls):
     """
     Crea los archivos csv extrayendolos de google sheet y devuelve la ubicacion de los archivos.
     """
     ubicacion_archivos = []
 
-    urls = list(map(PrepararURL, urls))
+    urls = list(map(preparar_url, urls))
     
     for i, url in enumerate(urls):
         if i == 0:
@@ -24,7 +24,7 @@ def ObtenerCSV(urls):
         else:
             tipos_datos = "bibliotecas"
         
-        direccion = obtenerDireccion(tipos_datos)
+        direccion = obtener_direccion(tipos_datos)
         os.makedirs(direccion[0], exist_ok=True)
 
         ubicacion_archivos.append(direccion[0] + direccion[1] + ".csv")
@@ -39,7 +39,7 @@ def ObtenerCSV(urls):
     
     return ubicacion_archivos
 
-def obtenerDireccion(datos):
+def obtener_direccion(datos):
     """
     Genera la direccion donde se va guardar y el nombre del archivo csv que obtengamos. 
     """
@@ -52,7 +52,7 @@ def obtenerDireccion(datos):
     return   (f'{datos}/{anio}-{meses[mes-1]}', f'/{datos}-{dia}-{mes}-{anio}')
 
 
-def PrepararURL(url):
+def preparar_url(url):
     """
     Prepara el url para poder hacer web scraping sin la limitacion de 100 filas de google sheets
     """
@@ -64,7 +64,7 @@ def PrepararURL(url):
 
     return "https://spreadsheets.google.com/tq?tqx=out:html&tq=&key=" + recorte_url
 
-def CrearDFs(ubicaciones):
+def crear_dfs(ubicaciones):
     """
     Devuelve un diccionario con los dataframes de museos, cines y bibliotecas.
     """
@@ -83,7 +83,7 @@ def CrearDFs(ubicaciones):
 
     return dataframe
 
-def NormalizarDFs(dataframes):
+def normalizar_dfs(dataframes):
     """
     Normaliza los dataframes sacando espacios en blanco y remplazandolos por NaN.
     """
@@ -95,7 +95,7 @@ def NormalizarDFs(dataframes):
             dataframes[key]['espacio_INCAA'] = list(map(lambda x: x.lower() if isinstance(x, str) else x, dataframes[key]['espacio_INCAA']))
             dataframes[key].replace({np.nan:0,"si":1, "0":0}, inplace=True)
 
-def UnirDFs(dataframes):
+def unir_dfs(dataframes):
     """
     Une los data frames en uno solo con que solo contiene las columnas cod_localidad, id_provincia, id_departamento, categoría, provincia, localidad, nombre, domicilio, código postal, número de teléfono, mail, web.
     """
@@ -116,7 +116,7 @@ def UnirDFs(dataframes):
 
     return pd.concat(auxs_dfs, ignore_index=True)
 
-def Obtener_cant_indices(df_unido, dataframes):
+def obtener_cant_indices(df_unido, dataframes):
     """
     Genera un dataframe con la cantidad de indices por categoria, por fuente y por provincia y categoria.
     """
@@ -163,11 +163,11 @@ def run():
     urls = [config('URL_MUSEOS'),
             config('URL_CINES'),
             config('URL_BIBLIOTECAS')]
-    ubicaciones = ObtenerCSV(urls)
-    dataframes = CrearDFs(ubicaciones)
-    NormalizarDFs(dataframes)
-    df_unido = UnirDFs(dataframes)
-    df_cant_indices = Obtener_cant_indices(df_unido, dataframes)
+    ubicaciones = obtener_csv(urls)
+    dataframes = crear_dfs(ubicaciones)
+    normalizar_dfs(dataframes)
+    df_unido = unir_dfs(dataframes)
+    df_cant_indices = obtener_cant_indices(df_unido, dataframes)
     df_info_cines = obtener_info_cines(dataframes['cines'])
     
 
