@@ -1,3 +1,4 @@
+from hashlib import new
 from bs4 import BeautifulSoup
 import csv
 import requests
@@ -83,10 +84,33 @@ def CrearDFs(ubicaciones):
     return dataframe
 
 def NormalizarDFs(dataframes):
-
+    """
+    Normaliza los dataframes sacando espacios en blanco y remplazandolos por NaN.
+    """
     for key in list(dataframes.keys()):
         dataframes[key].replace(['\xa0','','s/d',' '],np.nan, inplace=True)
+        dataframes[key].drop_duplicates(inplace=True)
 
+def UnirDFs(dataframes):
+    """
+    Une los data frames en uno solo con que solo contiene las columnas cod_localidad, id_provincia, id_departamento, categoría, provincia, localidad, nombre, domicilio, código postal, número de teléfono, mail, web.
+    """
+
+    columns_to_delete = [['Observaciones', 'subcategoria','piso', 'cod_area', 'Latitud', 'Longitud', 'TipoLatitudLongitud', 'Info_adicional', 'fuente', 'jurisdiccion', 'año_inauguracion', 'actualizacion'],                           # museos
+                        ['Observaciones','Departamento','Piso','cod_area','Información adicional','Latitud', 'Longitud', 'TipoLatitudLongitud','Fuente', 'tipo_gestion','Pantallas', 'Butacas', 'espacio_INCAA','año_actualizacion'],   # cines
+                        ['Observacion', 'Subcategoria', 'Departamento', 'Piso', 'Cod_tel', 'Información adicional', 'Latitud', 'Longitud', 'TipoLatitudLongitud', 'Fuente', 'Tipo_gestion', 'año_inicio', 'Año_actualizacion']]         # bibliotecas
+
+    new_names = ["cod_localidad", "id_provincia", "id_departamento", "categoría", "provincia", "localidad", "nombre", "domicilio", "código postal", "número de teléfono", "mail", "web"]
+    
+    auxs_dfs = []
+
+    for to_delete, df in zip(columns_to_delete, dataframes.values()):
+
+        df_aux = df.drop(labels=to_delete, axis=1)
+        df_aux.rename(columns=dict(zip(list(df_aux.columns), new_names)), inplace=True)
+        auxs_dfs.append(df_aux)
+
+    return pd.concat(auxs_dfs, ignore_index=True)
 
 def run():
     """
@@ -99,8 +123,12 @@ def run():
     ubicaciones = ObtenerCSV(urls)
     dataframes = CrearDFs(ubicaciones)
     NormalizarDFs(dataframes)
+    df_unido = UnirDFs(dataframes)
+    
 
-    print(dataframes['museos'].head())
+    print(df_unido.head(5))
+    print(df_unido.tail(5))
+
 
     
 
