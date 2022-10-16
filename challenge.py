@@ -91,6 +91,10 @@ def NormalizarDFs(dataframes):
         dataframes[key].replace(['\xa0','','s/d',' '],np.nan, inplace=True)
         dataframes[key].drop_duplicates(inplace=True)
 
+        if key == 'cines':
+            dataframes[key]['espacio_INCAA'] = list(map(lambda x: x.lower() if isinstance(x, str) else x, dataframes[key]['espacio_INCAA']))
+            dataframes[key].replace({np.nan:0,"si":1, "0":0}, inplace=True)
+
 def UnirDFs(dataframes):
     """
     Une los data frames en uno solo con que solo contiene las columnas cod_localidad, id_provincia, id_departamento, categoría, provincia, localidad, nombre, domicilio, código postal, número de teléfono, mail, web.
@@ -112,6 +116,45 @@ def UnirDFs(dataframes):
 
     return pd.concat(auxs_dfs, ignore_index=True)
 
+def Obtener_cant_indices(df_unido, dataframes):
+    """
+    Genera un dataframe con la cantidad de indices por categoria, por fuente y por provincia y categoria.
+    """
+
+    dfs_to_concat = []
+    
+    aux = df_unido['categoría'].value_counts() 
+    aux = aux.to_frame().reset_index()
+    aux.rename(columns={'index':'categoria', 'categoría':'cant_registros'}, inplace=True)
+    aux['categoria'] = list(map(lambda x: 'Categoria ' + x, aux['categoria']))
+    dfs_to_concat.append(aux)
+
+
+    aux = {}
+    for dato in dataframes.keys():
+        aux["Fuente " + dato] = dataframes[dato].shape[0]
+
+    aux = pd.Series(aux).to_frame().reset_index()
+    aux.rename(columns={'index':'categoria', 0:'cant_registros'}, inplace=True)
+    dfs_to_concat.append(aux)
+
+
+    aux = df_unido.value_counts(['provincia','categoría'], sort=False).to_frame().reset_index()
+    aux['categoría'] = aux['provincia'].str.cat(aux['categoría'], sep=', ')
+    aux.drop('provincia', axis=1, inplace=True)
+    aux.rename(columns={0:'cant_registros','categoría':'categoria'}, inplace=True)
+    dfs_to_concat.append(aux)
+
+    return pd.concat(dfs_to_concat, ignore_index=True)
+
+def obtener_info_cines(cines):
+    """
+    Devuelve un dataframe con la cantidad de panttallas, butacas y espacios INCAA por provincia.
+    """
+
+    return cines[['Provincia','Pantallas', 'Butacas', 'espacio_INCAA']].groupby('Provincia').sum().reset_index()
+
+
 def run():
     """
     Es el cuerpo del programa
@@ -124,13 +167,11 @@ def run():
     dataframes = CrearDFs(ubicaciones)
     NormalizarDFs(dataframes)
     df_unido = UnirDFs(dataframes)
+    df_cant_indices = Obtener_cant_indices(df_unido, dataframes)
+    df_info_cines = obtener_info_cines(dataframes['cines'])
     
 
-    print(df_unido.head(5))
-    print(df_unido.tail(5))
-
-
-    
+    print(df_info_cines)
 
 
 
