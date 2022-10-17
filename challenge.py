@@ -7,6 +7,7 @@ import os
 from datetime import date
 import pandas as pd
 import numpy as np
+from sqlalchemy import create_engine
 
 def obtener_csv(urls):
     """
@@ -171,7 +172,17 @@ def run():
     df_info_cines = obtener_info_cines(dataframes['cines'])
     
 
-    print(df_info_cines)
+    hostname = config('HOSTNAME')
+    database = config('DATABASE')
+    username = config('USERNAME')
+    passw = config('PASSWORD')
+    port = config('PORT_ID')
+
+    engine = create_engine(f'postgresql://{username}:{passw}@{hostname}:{port}/{database}')
+
+    df_unido.to_sql("museos_cines_biblio", engine)
+    df_cant_indices.to_sql("cant_indices", engine)
+    df_info_cines.to_sql("cines", engine)
 
 
 
