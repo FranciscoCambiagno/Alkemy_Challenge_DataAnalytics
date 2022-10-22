@@ -1,9 +1,16 @@
 from decouple import config
 from sqlalchemy import create_engine, text
 
-def runQuery(engine, query):
+def run_query(engine, query):
     engine.connect().execute((text(query)))
-    #engine.execute(query)
+
+def leer_sql(nombre):
+    query = ""
+    with open(nombre, "r", encoding='utf8') as archivo:
+        for linea in archivo:
+            query += linea
+    
+    return query
 
 def run():
     """
@@ -16,14 +23,14 @@ def run():
     passw = config('PASSWORD')
     port = config('PORT_ID')
 
-    engine = create_engine(f'postgresql://{username}:{passw}@{hostname}:{port}/{database}') # Error fatal: no existe la base de datos "db_alkemy"
+    nombres_archivos_sql = ['crear_tabla_cant_indices.sql','crear_tabla_cines.sql','crear_tabla_museos_cines_biblio.sql']
 
-    query = ""
-    with open("crear_tabla_museos_cines_biblio.sql", "r", encoding='utf8') as archivo:
-        for linea in archivo:
-            query += linea
-  
-    runQuery(engine, query)
+    engine = create_engine(f'postgresql://{username}:{passw}@{hostname}:{port}/{database}') 
+
+    for nombre in nombres_archivos_sql:
+        query = leer_sql(nombre)
+    
+        run_query(engine, query)
 
 if __name__ == '__main__':
     run()
