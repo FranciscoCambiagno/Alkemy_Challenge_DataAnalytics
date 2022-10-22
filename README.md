@@ -38,7 +38,7 @@ Creacion deusuario y contraseña:
 ```
 CREATE USER fran WITH PASSWORD 'Alkemy2022';
 ```
-Recomiendo poner de nombre de usario, exactamente el mismo nombre de usario que su secion de linux para evitar un error. Para eso solo hay que cambiar donde dice `fran` en el comando de arriba. Y tambien se puede cambiar la contraseña a su gusto.
+Aca puede poner el nombre de usuario y contraseñe que desee. Para eso solo hay que cambiar donde dice `fran` en el comando de arriba, para cambiar el usuario y donde dice `'Alkemy2022'` para cambiar la contraseña.
 
 Para crear la base de datos usamos:
 ```
@@ -46,10 +46,6 @@ CREATE DATABASE db_alkemy WITH OWNER fran;
 ```
 Aca podemos cambiar le nombre de la base de datos y recuerde cambiar el nombre del owner por el nombre de usario que haya elegido anteriormente.
 
-Despues tenemos que darle al usario que creamos permisos de superuser, que o podemos ahcer con este comando
-```
-ALTER USER admin WITH superuser;
-```
 Una vez hecho estos pasos, debemos ir al archivo `.env` y cambiar el nombre de usario en `USERNAME`, la contraseña en `PASSWORD` y el nombre de la base de datos en `DATABASE`, por lo que hayamos puesto anteriormente (Si es que los cambaimos).
 
 Ahora si, podemos empezar a ejecutar todo empezando primero por `creacion_tablas.py` y despues por `challenge.py`.
