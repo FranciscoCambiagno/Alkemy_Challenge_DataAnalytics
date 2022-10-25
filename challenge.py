@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 
+
 def obtener_csv(urls):
     """
     Crea los archivos csv extrayendolos de google sheet y devuelve la ubicacion de los archivos.
@@ -40,6 +41,7 @@ def obtener_csv(urls):
     
     return ubicacion_archivos
 
+
 def obtener_direccion(datos):
     """
     Genera la direccion donde se va guardar y el nombre del archivo csv que obtengamos. 
@@ -65,6 +67,7 @@ def preparar_url(url):
 
     return "https://spreadsheets.google.com/tq?tqx=out:html&tq=&key=" + recorte_url
 
+
 def crear_dfs(ubicaciones):
     """
     Devuelve un diccionario con los dataframes de museos, cines y bibliotecas.
@@ -84,6 +87,7 @@ def crear_dfs(ubicaciones):
 
     return dataframe
 
+
 def normalizar_dfs(dataframes):
     """
     Normaliza los dataframes sacando espacios en blanco y remplazandolos por NaN.
@@ -95,6 +99,7 @@ def normalizar_dfs(dataframes):
         if key == 'cines':
             dataframes[key]['espacio_INCAA'] = list(map(lambda x: x.lower() if isinstance(x, str) else x, dataframes[key]['espacio_INCAA']))
             dataframes[key].replace({np.nan:0,"si":1, "0":0}, inplace=True)
+
 
 def unir_dfs(dataframes):
     """
@@ -116,6 +121,7 @@ def unir_dfs(dataframes):
         auxs_dfs.append(df_aux)
 
     return pd.concat(auxs_dfs, ignore_index=True)
+
 
 def obtener_cant_indices(df_unido, dataframes):
     """
@@ -147,6 +153,7 @@ def obtener_cant_indices(df_unido, dataframes):
     dfs_to_concat.append(aux)
 
     return pd.concat(dfs_to_concat, ignore_index=True)
+    
 
 def obtener_info_cines(cines):
     """
@@ -155,11 +162,18 @@ def obtener_info_cines(cines):
 
     return cines[['Provincia','Pantallas', 'Butacas', 'espacio_INCAA']].groupby('Provincia').sum().reset_index()
 
+def cargar_datos(df, nombre_tabla, engine):
+    """
+    Recibe un dataframe y lo carga en la base de datos en la tabla con el nombre ingresado.
+    """
+
+    df.to_sql(nombre_tabla, con=engine, if_exists='replace' ,index_label='id' , method='multi')
 
 def run():
     """
     Es el cuerpo del programa
     """
+    dfs_listos = []
 
     urls = [config('URL_MUSEOS'),
             config('URL_CINES'),
@@ -167,9 +181,9 @@ def run():
     ubicaciones = obtener_csv(urls)
     dataframes = crear_dfs(ubicaciones)
     normalizar_dfs(dataframes)
-    df_unido = unir_dfs(dataframes)
-    df_cant_indices = obtener_cant_indices(df_unido, dataframes)
-    df_info_cines = obtener_info_cines(dataframes['cines'])
+    dfs_listos.append( unir_dfs(dataframes) )
+    dfs_listos.append( obtener_cant_indices(dfs_listos[0], dataframes) )
+    dfs_listos.append( obtener_info_cines(dataframes['cines']) )
     
 
     hostname = config('HOSTNAME')
@@ -178,13 +192,12 @@ def run():
     passw = config('PASSWORD')
     port = config('PORT_ID')
 
+    nombres_tablas_sql = ['museos_cines_biblio', 'cant_indices', 'cines']
+
     engine = create_engine(f'postgresql://{username}:{passw}@{hostname}:{port}/{database}')
 
-    df_unido.to_sql("museos_cines_biblio", engine)
-    df_cant_indices.to_sql("cant_indices", engine)
-    df_info_cines.to_sql("cines", engine)
-
-
+    for nombre_tabla, df in zip(nombres_tablas_sql,dfs_listos):
+        cargar_datos(df, nombre_tabla, engine)
 
 if __name__ == "__main__":
     run()
